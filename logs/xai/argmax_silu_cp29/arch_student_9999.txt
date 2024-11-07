@@ -1,0 +1,191 @@
+Student(
+  (input_stream): ModuleList(
+    (0-3): 4 x InputStream(
+      (init_bn): BatchNorm2d(4, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (stem_scn): Spatial_Graph_Layer(
+        (conv): SpatialGraphConv(
+          (gcn): Conv2d(4, 128, kernel_size=(1, 1), stride=(1, 1))
+        )
+        (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (residual): Sequential(
+          (0): Conv2d(4, 64, kernel_size=(1, 1), stride=(1, 1))
+          (1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+        (activation): SiLU_Spatial_Graph_Layer
+      )
+      (stem_tcn): Temporal_Basic_Layer(
+        (conv): Conv2d(64, 64, kernel_size=(3, 1), stride=(1, 1), padding=(1, 0))
+        (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (residual): Identity()
+        (activation): SiLU_Temporal_Basic_Layer
+      )
+      (block-0_scn): Spatial_Graph_Layer(
+        (conv): SpatialGraphConv(
+          (gcn): Conv2d(64, 128, kernel_size=(1, 1), stride=(1, 1))
+        )
+        (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (residual): Identity()
+        (activation): SiLU_Spatial_Graph_Layer
+      )
+      (block-0_tcn-0): Temporal_Sep_Layer(
+        (expand_conv): Sequential(
+          (0): Conv2d(64, 96, kernel_size=(1, 1), stride=(1, 1))
+          (1): BatchNorm2d(96, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+        (activation_1): SiLU_Temporal_Sep_Layer
+        (depth_conv): Sequential(
+          (0): Conv2d(96, 96, kernel_size=(3, 1), stride=(3, 1), padding=(1, 0), groups=96)
+          (1): BatchNorm2d(96, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+        (point_conv): Sequential(
+          (0): Conv2d(96, 64, kernel_size=(1, 1), stride=(1, 1))
+          (1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+        (activation_2): SiLU_Temporal_Sep_Layer
+        (residual): Sequential(
+          (0): Conv2d(64, 64, kernel_size=(1, 1), stride=(3, 1))
+          (1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+      )
+      (block-0_tcn-1): Temporal_Sep_Layer(
+        (expand_conv): Sequential(
+          (0): Conv2d(64, 96, kernel_size=(1, 1), stride=(1, 1))
+          (1): BatchNorm2d(96, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+        (activation_1): SiLU_Temporal_Sep_Layer
+        (depth_conv): Sequential(
+          (0): Conv2d(96, 96, kernel_size=(3, 1), stride=(1, 1), padding=(1, 0), groups=96)
+          (1): BatchNorm2d(96, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+        (point_conv): Sequential(
+          (0): Conv2d(96, 64, kernel_size=(1, 1), stride=(1, 1))
+          (1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+        (activation_2): SiLU_Temporal_Sep_Layer
+        (residual): Identity()
+      )
+      (block-0_att): AttentionLayer(
+        (att): FrameAtt(
+          (avg_pool): AdaptiveAvgPool2d(output_size=1)
+          (max_pool): AdaptiveMaxPool2d(output_size=1)
+          (conv): Conv2d(2, 1, kernel_size=(9, 1), stride=(1, 1), padding=(4, 0))
+        )
+        (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (activation): SiLU_AttentionLayer
+      )
+      (block-1_scn): Spatial_Graph_Layer(
+        (conv): SpatialGraphConv(
+          (gcn): Conv2d(64, 128, kernel_size=(1, 1), stride=(1, 1))
+        )
+        (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (residual): Identity()
+        (activation): SiLU_Spatial_Graph_Layer
+      )
+      (block-1_tcn-0): Temporal_Sep_Layer(
+        (expand_conv): Sequential(
+          (0): Conv2d(64, 96, kernel_size=(1, 1), stride=(1, 1))
+          (1): BatchNorm2d(96, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+        (activation_1): SiLU_Temporal_Sep_Layer
+        (depth_conv): Sequential(
+          (0): Conv2d(96, 96, kernel_size=(3, 1), stride=(3, 1), padding=(1, 0), groups=96)
+          (1): BatchNorm2d(96, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+        (point_conv): Sequential(
+          (0): Conv2d(96, 64, kernel_size=(1, 1), stride=(1, 1))
+          (1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+        (activation_2): SiLU_Temporal_Sep_Layer
+        (residual): Sequential(
+          (0): Conv2d(64, 64, kernel_size=(1, 1), stride=(3, 1))
+          (1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+      )
+      (block-1_tcn-1): Temporal_Sep_Layer(
+        (expand_conv): Sequential(
+          (0): Conv2d(64, 96, kernel_size=(1, 1), stride=(1, 1))
+          (1): BatchNorm2d(96, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+        (activation_1): SiLU_Temporal_Sep_Layer
+        (depth_conv): Sequential(
+          (0): Conv2d(96, 96, kernel_size=(3, 1), stride=(1, 1), padding=(1, 0), groups=96)
+          (1): BatchNorm2d(96, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+        (point_conv): Sequential(
+          (0): Conv2d(96, 64, kernel_size=(1, 1), stride=(1, 1))
+          (1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+        (activation_2): SiLU_Temporal_Sep_Layer
+        (residual): Identity()
+      )
+      (block-1_att): AttentionLayer(
+        (att): FrameAtt(
+          (avg_pool): AdaptiveAvgPool2d(output_size=1)
+          (max_pool): AdaptiveMaxPool2d(output_size=1)
+          (conv): Conv2d(2, 1, kernel_size=(9, 1), stride=(1, 1), padding=(4, 0))
+        )
+        (bn): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (activation): SiLU_AttentionLayer
+      )
+    )
+  )
+  (main_stream): MainStream(
+    (block-0_scn_main): Spatial_Graph_Layer(
+      (conv): SpatialGraphConv(
+        (gcn): Conv2d(256, 256, kernel_size=(1, 1), stride=(1, 1))
+      )
+      (bn): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (residual): Sequential(
+        (0): Conv2d(256, 128, kernel_size=(1, 1), stride=(1, 1))
+        (1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      )
+      (activation): SiLU_Spatial_Graph_Layer
+    )
+    (block-0_tcn_main): Temporal_Basic_Layer(
+      (conv): Conv2d(128, 128, kernel_size=(7, 1), stride=(1, 1), padding=(3, 0))
+      (bn): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (residual): Identity()
+      (activation): SiLU_Temporal_Basic_Layer
+    )
+    (block-0_att_main): AttentionLayer(
+      (att): FrameAtt(
+        (avg_pool): AdaptiveAvgPool2d(output_size=1)
+        (max_pool): AdaptiveMaxPool2d(output_size=1)
+        (conv): Conv2d(2, 1, kernel_size=(9, 1), stride=(1, 1), padding=(4, 0))
+      )
+      (bn): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (activation): SiLU_AttentionLayer
+    )
+    (block-1_scn_main): Spatial_Graph_Layer(
+      (conv): SpatialGraphConv(
+        (gcn): Conv2d(128, 96, kernel_size=(1, 1), stride=(1, 1))
+      )
+      (bn): BatchNorm2d(48, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (residual): Sequential(
+        (0): Conv2d(128, 48, kernel_size=(1, 1), stride=(1, 1))
+        (1): BatchNorm2d(48, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      )
+      (activation): SiLU_Spatial_Graph_Layer
+    )
+    (block-1_tcn_main): Temporal_Basic_Layer(
+      (conv): Conv2d(48, 48, kernel_size=(7, 1), stride=(1, 1), padding=(3, 0))
+      (bn): BatchNorm2d(48, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (residual): Identity()
+      (activation): SiLU_Temporal_Basic_Layer
+    )
+    (block-1_att_main): AttentionLayer(
+      (att): FrameAtt(
+        (avg_pool): AdaptiveAvgPool2d(output_size=1)
+        (max_pool): AdaptiveMaxPool2d(output_size=1)
+        (conv): Conv2d(2, 1, kernel_size=(9, 1), stride=(1, 1), padding=(4, 0))
+      )
+      (bn): BatchNorm2d(48, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (activation): SiLU_AttentionLayer
+    )
+  )
+  (classifier): Classifier(
+    (gap): AdaptiveAvgPool3d(output_size=1)
+    (dropout): Dropout(p=0.05, inplace=False)
+    (fc): Conv3d(48, 2, kernel_size=(1, 1, 1), stride=(1, 1, 1))
+  )
+)

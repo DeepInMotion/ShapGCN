@@ -1,0 +1,250 @@
+# Log dir
+logs:
+  dir: logs/${dataset}_
+
+# Experiment name under which the run is stored
+experiment: visualization
+
+# for continuing training put path here and true
+cont_training: False
+cont_dir: './logs/1008_xview60/2023-11-20 08-46-56'
+
+# mode
+mode: nas
+
+# Env. setting
+ddp: False
+gpus: [0]
+seed: 1234
+num_threads: 8
+report_freq: 5
+no_progress_bar: False
+mmap: True
+work_dir: /Users/felixtempel/PycharmProjects/AutoGCN/logs
+
+# Old SP (True) or new (False)
+old_sp: False
+
+# ------ Data settings ------------
+# cp19 or cp29
+dataset: cp29
+dataset_args:
+  layout: in-motion-2022
+  strategy: distance
+  num_frame: 225
+  parts_distance: 75
+  inputs: JVBA
+  transform: False
+  normalize: False
+  root_folder: /Users/felixtempel/PycharmProjects/AutoGCN/data/npy_files
+  ntu60_path: /Users/felixtempel/PycharmProjects/AutoGCN/data/raw/ntu/ntu60
+  ntu120_path: /Users/felixtempel/PycharmProjects/AutoGCN/data/raw/ntu/ntu120
+  filter: True
+  filter_order: 8
+  augment: True
+
+
+# Dataloader settings
+batch_size: 16
+num_workers: 12
+pin_memory: True
+num_frame: 288
+shuffle: True
+
+# Controller args
+use_baseline:   False
+reward_map_fn:  None
+train_epochs:   50
+warmup_rollouts: 20
+warmup_epochs: 0
+argmax_epochs:  300
+rollouts:       30
+eval_interval: 5
+max_iter: 50
+
+# XAI
+xai_model_path: "xai/argmax_silu_cp29/student_model_9999.pth.tar"
+xai_method: vis # check in code what to do!
+xai_shap_algo: shap # captum or shap
+xai_hyper_param: [2, 2, 0, 0, 0]
+xai_num_back: 20
+xai_random_back: False
+xai_back_idx: 1
+xai_back_seed: 6
+xai_batch_size: 12
+
+# RETRAIN -> use this for building and retraining an architecture to not run the full NAS
+# put in architecture and hyperparameter choices as dict
+retrain_arch_param: {'init_lay': 48, 'act': 'relu6', 'att_lay': 'stja', 'conv_lay': 'Basic', 'drop_prob': 0.05,
+                     'multi': False, 'expand_ratio': 1.5, 'reduct_ratio': 2, 'blocks_in': 3, 'depth_in': 1,
+                     'stride_in': 1, 'scale_in': 1.2, 'temp_win_in': 7, 'graph_dist_in': 1, 'blocks_main': 4,
+                     'depth_main': 2, 'stride_main': 2, 'scale_main': 1.1, 'temp_win_main': 3, 'graph_dist_main': 3}
+retrain_hyper_param: {'lr': 0.005, 'optimizers': 'SGD', 'weight_decay': 0.0, 'momentum': 0.5, 'batch_size': 24}
+retrain_ensemble: False
+retrain_model_path: "/home/espen/PycharmProjects/AutoGCN/logs/nas/cp_29_nas_cp29/new_nas/argmax_1003/student_model_1003.pth.tar"
+retrain_model_path_2: "nas/nas_four_channel_cp29/2024-08-21_13-58-24/argmax_1002/student_model_1002.pth.tar"
+
+# Policy deletion
+policy_deletion: False
+policy_updates: 0 # trained argmax students before policies are deleted
+policy_threshold: 0.15 # difference to others
+
+# Random Search
+random_search: False
+random_epochs_half: 25
+random_iter: 50
+
+# Replay memory
+replay_mem: True
+replay_batch: 10
+replay_cap: 200
+replay_thres: 0.9 # min top1 auc. to append # if ntu --> 0.8; kinetics 0.25, cp = 0.9
+
+# Early stop # for ntu 6, 0.5, 5; for kinetics 6, 0.2, 5
+early_stop: True
+early_stop_epoch: 6
+early_stop_acc: 0.5
+early_stop_no_impr: 5
+
+# PROXY Learning settings
+proxy_mode: False
+proxy_dir: ""
+
+# Bootstrap test - give indicies for arch and hyper space
+bootstrap: True
+bootstrap_iter: 1
+bootstrap_alpha: 5.0 # 100-alpha --> 95% CI
+bootstrap_retrain: True
+# bootstrap_path: "./logs/bootstrap_xsub60/2023-11-01 13-02-15/argmax_9999_relu6/student_model_9999.pth.tar"
+# bootstrap_arch: [0, 2, 2, 1, 2, 0, 1, 2, 0, 1, 1, 1, 0, 0, 2, 1, 0, 0]
+# bootstrap_hyper: [1, 0, 2, 0, 1]
+
+bootstrap_arch: [3, 2, 3, 3, 0, 1, 0, 2, 1, 0, 0, 5, 0, 0, 1, 0, 0, 0]
+bootstrap_hyper: [2, 2, 0, 0, 0]
+bootstrap_path: "./logs/JVBA_test_xview60/2023-10-24 16-59-11/argmax_9999_relu6/student_model_9999.pth.tar"
+
+# controller settings
+controller_lr: 0.001
+controller_dir: "/controller_weights/"
+
+# fixed optimizer settings
+optimizer_args:
+  SGD:
+    momentum: 0.9
+    nesterov: True
+  Adam:
+    betas: [0.9,0.99]
+    amsgrad: True
+  RMSprop:
+    centered: True
+  AdamW:
+    amsgrad: True
+
+# lr scheduler settings
+# might increase this
+lr_scheduler: True
+sched_args:
+  warm_up: 10
+  start_factor: 0.25
+  step_lr: [200, 250]
+  gamma: 0.5
+
+# Architect Search Space OLD
+arch:
+  blocks_in:    [1, 2, 3]
+  depth_in:     [1, 2]
+  stride_in:    [1, 2, 3, 4, 5]
+  blocks_main:  [1, 2]
+  depth_main:   [1, 2]
+  stride_main:  [1, 2, 3, 4, 5]
+  temp_win:     [3, 5, 7]
+  graph_dist:   [2, 3, 4]
+  expand_ratio: [1.05, 1.1, 1.15]
+  reduct_ratio: [1.225, 1.25, 1.275, 1.3, 1.325, 1.35]
+  scale_in:     [0.4, 0.6, 0.8]
+  scale_main:   [1.2, 1.4, 2.0, 2.5, 3.0]
+  act:          ["relu", "relu6", "hardswish", "swish"]
+  att_lay:      ['stja', 'ca', 'fa', 'ja', 'pa']
+  conv_lay:     ["Basic", "Bottleneck", "Sep", "SG", "V3", "Shuffle"]
+  init_lay:     [64, 96, 128, 156]
+  drop_prob:    [0.15, 0.2, 0.25, 0.3]
+
+# Architect Search Space NEW
+arch_2:
+  # common
+  init_lay:       [16, 32, 48, 64, 96]
+  act:            ["relu", "relu6", "hardswish", "swish"]
+  att_lay:        ["stja", "ca", "fa", "ja", "pa"]
+  conv_lay:       ["Basic", "Bottleneck", "Sep", "SG", "V3", "Shuffle"]
+  drop_prob:      [0, 0.025, 0.05, 0.1]
+  multi:          [False]
+  expand_ratio:   [1, 1.5, 2]
+  reduct_ratio:   [1, 1.5, 2]
+  # input stream
+  blocks_in:      [1, 2, 3]
+  depth_in:       [1, 2, 3]
+  stride_in:      [1, 2, 3]
+  scale_in:       [0.8, 0.9, 1, 1.1, 1.2]
+  temp_win_in:    [3, 5, 7]
+  graph_dist_in:  [1, 2, 3]
+
+  # main stream
+  blocks_main:      [1, 2, 3, 4]
+  depth_main:       [1, 2, 3, 4]
+  stride_main:      [1, 2, 3]
+  scale_main:       [0.95, 1, 1.1, 1.2, 1.3]
+  temp_win_main:    [3, 5, 7]
+  graph_dist_main:  [1, 2, 3]
+
+# Hyperparamter search space -common
+hyper:
+  lr:           [0.005, 0.001, 0.0005]
+  optimizers:   ['SGD', 'Adam', 'AdamW']
+  weight_decay: [0.0, 0.01, 0.001, 0.0001]
+  momentum:     [0.5, 0.9, 0.99]
+  batch_size:   [24, 32, 40]
+
+# --------------------------------------------- Debug settings ---------------------------------------------------
+debug: True
+debug_argmax_epoch: 1
+debug_train_epochs: 1
+debug_warmup_rollouts: 1
+debug_rollouts: 1
+debug_load_small_set: True
+
+# Debug SP new
+dev_2:
+  # common
+  init_lay:     [48]
+  act:          ["swish" ]
+  att_lay:      ["stja"]
+  conv_lay:     ["Sep" ]
+  drop_prob:    [0.3]
+  multi:        [False]
+  expand_ratio: [1.05, 1.1, 1.15]
+  reduct_ratio: [1.225, 1.25, 1.275, 1.3, 1.325, 1.35]
+
+  # input stream
+  blocks_in:      [1 ]
+  depth_in:       [2 ]
+  scale_in:       [0.8, 0.9, 1, 1.1, 1.2]
+  stride_in:      [1]
+  temp_win_in:    [5]
+  graph_dist_in:  [3]
+
+  # main stream
+  blocks_main:      [2 ]
+  depth_main:       [2]
+  scale_main:       [0.95, 1, 1.1, 1.2, 1.3]
+  stride_main:      [1]
+  temp_win_main:    [5]
+  graph_dist_main:  [3] # kernel size -> max 4
+
+
+# Debug Hyper Space new/old
+hyper_dev:
+  lr:           [0.05, 0.1]
+  optimizers:   ['SGD']
+  weight_decay: [0.0001]
+  momentum:     [ 0.9]
+  batch_size:   [ 16]

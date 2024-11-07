@@ -1,0 +1,7 @@
+your_node:
+  dataset_args:
+    root_folder: ""
+    ntu60_path: ""
+    ntu120_path: ""
+  work_dir: ""
+

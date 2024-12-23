@@ -64,8 +64,8 @@ max_iter: 50
 
 # XAI
 xai_model_path: "xai/argmax_silu_cp29/student_model_9999.pth.tar"
-xai_method: vis # check in code what to do!
-xai_shap_algo: shap # captum or shap
+xai_algo: gradcam # gradcam or shap
+xai_method: vis   # shap:[shap, perturb, perturb_shap, vis]; gradcam:[gradcam, cam, perturb, vis]
 xai_hyper_param: [2, 2, 0, 0, 0]
 xai_num_back: 20
 xai_random_back: False

@@ -46,10 +46,17 @@ def main():
         args.cont_dir = cont_dir
 
     # Choice of mode
-    if parser.mode == "xai":
-        from src.xai import ShapGCN
-        explainer = ShapGCN(args)
-        explainer.start()
+    elif parser.mode == "xai":
+        if args.xai_algo == "shap":
+            from src.xai import ShapGCN
+            explainer = ShapGCN(args)
+            explainer.start()
+        elif args.xai_algo == "gradcam":
+            from src.xai import GradCamGCN
+            explainer = GradCamGCN(args)
+            explainer.start()
+        else:
+            logging.error(f"xai_algo {args.xai_algo} not supported either choose: shap or gradcam!")
     else:
         logging.error("Mode: [{}] not known!".format(parser.mode))
         sys.exit()

@@ -1,7 +1,35 @@
 import logging
 import glob
+import re
+
 import numpy as np
 from torch.utils.data import Sampler
+
+
+# Constants
+NTU_JOINT_NAMES = ["base_of_the_spine", "middle_of_the_spine", "neck", "head", "left_shoulder",
+                   "left_elbow", "left_wrist", "left_hand", "right_shoulder", "right_elbow", "right_wrist",
+                   "right_hand", "left_hip", "left_knee", "left_ankle", "left_foot", "right_hip",
+                   "right_knee", "right_ankle", "right_foot", "spine", "tip_of_the_left_hand",
+                   "left_thumb", "tip_of_the_right_hand", "right_thumb"]
+
+CP_JOINT_NAMES_29 = ['head_top', 'nose', 'right_ear', 'left_ear', 'upper_neck', 'right_shoulder',
+                     'right_elbow', 'right_wrist', 'thorax', 'left_shoulder', 'left_elbow', 'left_wrist',
+                     'pelvis', 'right_hip', 'right_knee', 'right_ankle', 'left_hip', 'left_knee',
+                     'left_ankle', 'right_little_finger', 'right_index_finger', 'left_little_finger',
+                     'left_index_finger', 'right_heel', 'right_little_toe', 'right_big_toe', 'left_heel',
+                     'left_little_toe', 'left_big_toe']
+
+
+class GradCamHandler:
+    def __init__(self):
+        pass
+
+    def load_gradcams_cp(self, paths: str):
+        pass
+
+    def load_gradcams_ntu(self, paths: str):
+        pass
 
 
 class ShapHandler:
@@ -253,3 +281,89 @@ class ShapSampler(Sampler):
 
     def __len__(self):
         return self.n_samples
+
+
+def plot_skel_cp(val_loader, ax, window_idx, x, y):
+    for joint_start, joint_end in val_loader.dataset.graph.neighbor_link:
+        ax.plot([x[joint_start], x[joint_end]], [y[joint_start], y[joint_end]], color='gray')
+    # Set axis limits and remove the coordinate system (no ticks or axis labels)
+    ax.set_title(f'Window {window_idx}')
+    ax.set_xlim([-0.25, 0.25])
+    ax.set_ylim([-0.6, 0.5])
+    ax.set_xticks([])
+    ax.set_yticks([])
+
+
+def plot_skel_ntu(val_loader, ax, window_idx, x, y, z):
+    for joint_start, joint_end in val_loader.dataset.graph.neighbor_link:
+        ax.plot([x[joint_start], x[joint_end]],
+                [y[joint_start], y[joint_end]],
+                [z[joint_start], z[joint_end]],
+                color='gray')
+    ax.set_title(f'Window {window_idx}')
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_zticks([])
+
+
+def load_gradcam_files(path):
+    files_grad_values = sorted(glob.glob(f'{path}/gradcam_values_class_*.npy'))
+    assert files_grad_values, "No GradCAM values were found!"
+    # get class number and layer dynamically
+    class_numbers = [int(re.search(r'class_(\d+)', s).group(1)) for s in files_grad_values]
+    layer_types = [re.search(r'class_\d+_(.*?)_seed', path).group(1) for path in files_grad_values]
+    logging.info(f"Found {len(files_grad_values)} GradCam values files for class {class_numbers} (+1)...")
+
+    gradcam_values_ntu = []
+    for file in files_grad_values:
+        gradcam_values_file = np.load(file)
+        gradcam_values_ntu.append(gradcam_values_file)
+    logging.info("Loaded all the files...")
+
+    return gradcam_values_ntu, class_numbers, layer_types
+
+
+def load_gradcam_files_cp(path):
+    """
+    Expect CP data only one file.
+    :param path:
+    :return:
+    """
+    files_grad_values = sorted(glob.glob(f'{path}/gradcam_values_class_*.npy'))
+    assert files_grad_values, "No GradCAM values were found!"
+
+    class_numbers = []
+    layer_types = []
+
+    for file in files_grad_values:
+        try:
+            class_match = re.search(r'class_(all|\d+)', file)
+            layer_match = re.search(r'class_(?:all|\d+)_(.*?)_seed', file)
+
+            if class_match:
+                class_numbers.append(class_match.group(1))  # 'all' or a specific class number
+            else:
+                raise ValueError(f"Class number not found in filename: {file}")
+
+            if layer_match:
+                layer_types.append(layer_match.group(1))
+            else:
+                raise ValueError(f"Layer type not found in filename: {file}")
+
+        except Exception as e:
+            logging.error(f"Error processing file {file}: {e}")
+            raise
+
+    if len(files_grad_values) == 1:
+        logging.info(f"Found 1 GradCam values file for class {class_numbers[0]}...")
+    else:
+        logging.info(f"Found {len(files_grad_values)} GradCam values files for classes {class_numbers}...")
+
+    gradcam_values_cp = []
+    for file in files_grad_values:
+        gradcam_values_file = np.load(file)
+        gradcam_values_cp.append(gradcam_values_file)
+
+    logging.info("Loaded all the files...")
+
+    return gradcam_values_cp, class_numbers, layer_types

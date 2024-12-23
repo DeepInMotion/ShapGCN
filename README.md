@@ -1,7 +1,8 @@
 ShapGCN
 ==============================
 
-Implementation of [**Explaining Human Activity Recognition with SHAP: Validating Insights with Perturbation and Quantitative Measures**](https://arxiv.org/abs/2411.03714)
+Implementation of [**Explaining Human Activity Recognition with SHAP: Validating Insights with Perturbation and Quantitative Measures**](https://arxiv.org/abs/2411.03714),
+extended with the experiments of [**Choose Your Explanation: A Comparison of SHAP and GradCAM in Human Activity Recognition**](https://arxiv.org/pdf/2412.16003)
 
 ### Libraries
 
@@ -93,7 +94,7 @@ The logs for the experiments can be found [here](https://studntnu-my.sharepoint.
 
 If you have any questions, feel free to email `felix.e.f.tempel@ntnu.no`.
 
-Please cite our paper if you use this code in your research. :)
+Please cite our papers if you use this code in your research. :)
 ```
 @misc{tempelExplainingHumanActivity2024,
 	title = {Explaining {Human} {Activity} {Recognition} with {SHAP}: {Validating} {Insights} with {Perturbation} 
@@ -102,5 +103,15 @@ Please cite our paper if you use this code in your research. :)
 	doi = {10.48550/ARXIV.2411.03714},
 	author = {Tempel, Felix and Ihlen, Espen Alexander F. and Adde, Lars and Strümke, Inga},
 	year = {2024},
+}
+
+@misc{tempel2024chooseexplanationcomparisonshap,
+      title={Choose Your Explanation: A Comparison of SHAP and GradCAM in Human Activity Recognition}, 
+      author={Felix Tempel and Daniel Groos and Espen Alexander F. Ihlen and Lars Adde and Inga Strümke},
+      year={2024},
+      eprint={2412.16003},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/2412.16003}, 
 }
 ```

@@ -12,7 +12,7 @@ import numpy as np
 from tqdm import tqdm
 from time import time
 import pandas as pd
-from captum.attr import DeepLiftShap, GuidedGradCam
+from captum.attr import DeepLiftShap
 from torch.utils.data import DataLoader, RandomSampler, Subset
 
 from src.initializer import Initializer
@@ -20,8 +20,9 @@ from src.model.trainer import Trainer
 from src.model.student import Student
 from src.xai.perturber import Perturber
 from src.utils import utils
-from src.xai.xai_vis import XAIVis
-from src.xai.xai_utils import ShapSampler, ShapHandler
+from src.xai.shap_vis import ShapVisualizer
+from src.xai.xai_utils import ShapSampler, ShapHandler, NTU_JOINT_NAMES, CP_JOINT_NAMES_29
+
 
 SEPARATOR = "-" * 50
 
@@ -73,17 +74,9 @@ class ShapGCN(Initializer):
         self.perturb_handler = None
 
         self.gen_parts_names = ['left arm', 'right arm', 'left leg', 'right leg', 'torso']
-        self.cp_joint_names_29 = ['head_top', 'nose', 'right_ear', 'left_ear', 'upper_neck', 'right_shoulder',
-                                  'right_elbow', 'right_wrist', 'thorax', 'left_shoulder', 'left_elbow', 'left_wrist',
-                                  'pelvis', 'right_hip', 'right_knee', 'right_ankle', 'left_hip', 'left_knee',
-                                  'left_ankle', 'right_little_finger', 'right_index_finger', 'left_little_finger',
-                                  'left_index_finger', 'right_heel', 'right_little_toe', 'right_big_toe', 'left_heel',
-                                  'left_little_toe', 'left_big_toe']
-        self.ntu_joint_names = ["base_of_the_spine", "middle_of_the_spine", "neck", "head", "left_shoulder",
-                                "left_elbow", "left_wrist", "left_hand", "right_shoulder", "right_elbow", "right_wrist",
-                                "right_hand", "left_hip", "left_knee", "left_ankle", "left_foot", "right_hip",
-                                "right_knee", "right_ankle", "right_foot", "spine", "tip_of_the_left_hand",
-                                "left_thumb", "tip_of_the_right_hand", "right_thumb"]
+        self.cp_joint_names_29 = CP_JOINT_NAMES_29
+        self.ntu_joint_names = NTU_JOINT_NAMES
+
 
     def start(self):
         """
@@ -93,23 +86,14 @@ class ShapGCN(Initializer):
         if self.cp:
             xai_methods_cp = {
                 "shap": self.xai_shap_cp,
-                "gradcam": self.xai_captum_guided_gradcam,
-                "cam": self.xai_cam,
                 "perturb": self.perturb_edge_experiment,
                 "perturb_shap": self.perturb_shap_cp,
                 "vis": self.visualize_shap_cp,
             }
-
-            # shap_algo = self.args.xai_shap_algo.lower()
-            # if shap_algo not in ["shap", "captum"]:
-            #     logging.error(f"Unknown SHAP method: {shap_algo}")
-            #    sys.exit(1)
             method = xai_methods_cp.get(self.args.xai_method)
         elif self.args.dataset in ["xsub60", "xview60", "xsub120", "xsetup120"]:
             xai_methods_ntu = {
                 "shap": self.xai_shap_ntu,
-                "gradcam": self.xai_captum_guided_gradcam,
-                "cam": self.xai_cam,
                 "perturb": self.perturb_edge_experiment,
                 "perturb_shap": self.perturb_shap_ntu,
                 "vis": self.visualize_shap_ntu,
@@ -128,7 +112,6 @@ class ShapGCN(Initializer):
     def perturb_shap_ntu(self):
         """
         Perturbation experiments for the NTU data.
-
         :return:
         """
         # Experiment variables
@@ -211,55 +194,6 @@ class ShapGCN(Initializer):
                     pickle.dump(predictions_by_index, f)
 
         logging.info("Done with perturbation experiment...")
-
-    def compute_shap_ordering_ntu(self, shap_values_dict: dict, indivdual_joint: bool, ntu_names: list,
-                                  parts_range: list, shap_class: int, indices_class: list):
-        """
-        Compute the ordering for one class of the NTU shaps.
-        :return:
-        """
-        averaged_shap_class_ntu = {}
-        sorted_mean_shap_ntu = {}
-
-        if not indivdual_joint:
-            logging.info("Averaging SHAPs over body parts")
-            for key, value in shap_values_dict.items():
-                averaged_shap_class_ntu[key] = self.perturb_handler.average_values_body_groups(value, self.body_parts)
-        else:
-            logging.info("Taking all SHAPs")
-            averaged_shap_class_ntu = shap_values_dict
-
-        for feature, shap_values_data in averaged_shap_class_ntu.items():
-            sorted_mean_shap_ntu[feature] = []
-            num_instances = shap_values_data.shape[0]
-
-            for i in range(num_instances):
-                mean_shap_values = []
-                shap_values = shap_values_data[i, :, :, shap_class]  # [samples, time, body parts/joints, 60]
-
-                for part_idx in parts_range:
-                    mean_value_for_part = np.mean(shap_values[:, part_idx])  # Mean over time steps for this body part
-                    mean_shap_values.append((ntu_names[part_idx], mean_value_for_part))
-
-                sorted_mean_shap_values_for_instance = sorted(mean_shap_values, key=lambda x: x[1], reverse=True)
-                sorted_mean_shap_ntu[feature].append((i, sorted_mean_shap_values_for_instance))
-
-        cumulative_shap_by_body_part_ntu = collections.defaultdict(lambda: collections.defaultdict(float))
-        # Iterate over each feature in sorted_mean_shap_values
-        for feature, instances in sorted_mean_shap_ntu.items():
-            for index, mean_shap_values in instances:
-                for body_part, mean_value in mean_shap_values:
-                    # Accumulate the SHAP values for this body part and index
-                    cumulative_shap_by_body_part_ntu[index][body_part] += mean_value
-
-        # Sort the body parts by their cumulative SHAP values for each index
-        sorted_body_parts_by_index_ntu = []
-        for index, body_part_shap_values in cumulative_shap_by_body_part_ntu.items():
-            sorted_body_parts = sorted(body_part_shap_values.items(), key=lambda x: x[1], reverse=True)
-            sorted_body_parts_by_index_ntu.append(sorted_body_parts)
-        # Combine SHAP values with their original class 0 indices
-        sorted_ntu_with_index = list(zip(sorted_body_parts_by_index_ntu, indices_class))
-        return sorted_ntu_with_index
 
     def perturb_shap_cp(self):
         """
@@ -375,7 +309,6 @@ class ShapGCN(Initializer):
                         pickle.dump(predictions_by_index, f)
 
         logging.info("Done with perturbation experiment...")
-
 
     def predict_perturbed(self, config_perturb, individual_joint, sorted_shaps, weights_original, rand_per=False):
         """
@@ -561,6 +494,55 @@ class ShapGCN(Initializer):
         sorted_shaps = [value for value, index in sorted_combined_list]
         return sorted_shaps
 
+    def compute_shap_ordering_ntu(self, shap_values_dict: dict, indivdual_joint: bool, ntu_names: list,
+                                  parts_range: list, shap_class: int, indices_class: list):
+        """
+        Compute the ordering for one class of the NTU shaps.
+        :return:
+        """
+        averaged_shap_class_ntu = {}
+        sorted_mean_shap_ntu = {}
+
+        if not indivdual_joint:
+            logging.info("Averaging SHAPs over body parts")
+            for key, value in shap_values_dict.items():
+                averaged_shap_class_ntu[key] = self.perturb_handler.average_values_body_groups(value, self.body_parts)
+        else:
+            logging.info("Taking all SHAPs")
+            averaged_shap_class_ntu = shap_values_dict
+
+        for feature, shap_values_data in averaged_shap_class_ntu.items():
+            sorted_mean_shap_ntu[feature] = []
+            num_instances = shap_values_data.shape[0]
+
+            for i in range(num_instances):
+                mean_shap_values = []
+                shap_values = shap_values_data[i, :, :, shap_class]  # [samples, time, body parts/joints, 60]
+
+                for part_idx in parts_range:
+                    mean_value_for_part = np.mean(shap_values[:, part_idx])  # Mean over time steps for this body part
+                    mean_shap_values.append((ntu_names[part_idx], mean_value_for_part))
+
+                sorted_mean_shap_values_for_instance = sorted(mean_shap_values, key=lambda x: x[1], reverse=True)
+                sorted_mean_shap_ntu[feature].append((i, sorted_mean_shap_values_for_instance))
+
+        cumulative_shap_by_body_part_ntu = collections.defaultdict(lambda: collections.defaultdict(float))
+        # Iterate over each feature in sorted_mean_shap_values
+        for feature, instances in sorted_mean_shap_ntu.items():
+            for index, mean_shap_values in instances:
+                for body_part, mean_value in mean_shap_values:
+                    # Accumulate the SHAP values for this body part and index
+                    cumulative_shap_by_body_part_ntu[index][body_part] += mean_value
+
+        # Sort the body parts by their cumulative SHAP values for each index
+        sorted_body_parts_by_index_ntu = []
+        for index, body_part_shap_values in cumulative_shap_by_body_part_ntu.items():
+            sorted_body_parts = sorted(body_part_shap_values.items(), key=lambda x: x[1], reverse=True)
+            sorted_body_parts_by_index_ntu.append(sorted_body_parts)
+        # Combine SHAP values with their original class 0 indices
+        sorted_ntu_with_index = list(zip(sorted_body_parts_by_index_ntu, indices_class))
+        return sorted_ntu_with_index
+
     def perturb_edge_experiment(self):
         """
         1. Build student model and change the edges
@@ -667,17 +649,8 @@ class ShapGCN(Initializer):
 
         # Initialize the background set and load the model
         self.background_set, self.background_labels, self.background_names = self._shap_background()
-        checkpoint = self._load_weights()
-        self.__build_student(checkpoint, 0)
-        self.assign_weights_opt_lrs(checkpoint)
-        model_weights = collections.OrderedDict()
-        # Copy contents of sub_dicts into model_weights
-        model_weights.update(checkpoint['model']['input_stream'])
-        model_weights.update(checkpoint['model']['main_stream'])
-        model_weights.update(checkpoint['model']['classifier'])
-        self.student_model.load_state_dict(model_weights)
-        logging.info("Loaded weights to model")
-        self.assign_weights_model(model_weights)
+        self.init_student_model()
+        logging.info("Initialized model...")
 
         # Depending on the method, initialize the appropriate explainer
         if method == "shap":
@@ -740,40 +713,6 @@ class ShapGCN(Initializer):
 
         torch.cuda.empty_cache()
 
-    def xai_captum_guided_gradcam(self):
-        """
-        Compute GradCAM values with the captum package.
-        :return:
-        """
-
-        logging.info("Initializing captum guided GradCAM...")
-        self.explainer_grad = GuidedGradCam(model=self.student_model, layer=self.student_model.classifier[1])
-
-        with torch.enable_grad():
-            for class_idx in tqdm(range(self.val_loader.dataset.num_classes), desc="Classes", unit="class"):
-                logging.info(f"Computing GradCAM values for class {class_idx}...")
-
-                # Get indices for the current class
-                indices_class = self.val_loader.dataset.get_indices(class_idx)
-                subset_loader_cam = DataLoader(Subset(self.val_loader.dataset, indices_class), batch_size=1,
-                                               shuffle=True)
-                logging.info("Initialized Subset loader...")
-
-                grad_cam_values_class = []
-
-                for batch_idx, (x_batch, y_batch, _) in enumerate(
-                        tqdm(subset_loader_cam, desc=f"Class {class_idx} Batches", unit="batch", leave=False)):
-                    x_batch = x_batch.to(self.gpu_id)
-
-                    start_time = time.time()
-                    grad_cam_values_batch = self.explainer_grad.attribute(x_batch, target=3)
-                    end_time = time.time()
-                    total_time = end_time - start_time
-                    logging.info("Generated GradCAM values for class {} batch {} in {} seconds."
-                                 .format(class_idx, batch_idx, total_time))
-
-                    grad_cam_values_class.append(grad_cam_values_batch)
-
     def xai_shap_ntu(self):
         """
         Compute SHAP values for the NTU data.
@@ -782,15 +721,7 @@ class ShapGCN(Initializer):
         logging.info("Initializing SHAP for the NTU dataset...")
         # initialize the model and load the weights etc.
         classes = [5, 10, 15]
-        checkpoint = self._load_weights()
-        self.__build_student(checkpoint, 0)
-        self.assign_weights_opt_lrs(checkpoint)
-        model_weights = collections.OrderedDict()
-        # Copy contents of sub_dicts into model_weights
-        model_weights.update(checkpoint['model']['input_stream'])
-        model_weights.update(checkpoint['model']['main_stream'])
-        model_weights.update(checkpoint['model']['classifier'])
-        self.student_model.load_state_dict(model_weights)
+        self.init_student_model()
         logging.info("Initialized model...")
 
         self.background_set, self.background_labels, self.background_names = self._shap_background()
@@ -855,21 +786,6 @@ class ShapGCN(Initializer):
         np.save(save_file, shap_values)
         logging.info(f"{prefix} {class_idx} saved to: {save_file}")
 
-    def xai_grad_cam(self, target_layer):
-        """
-        Calculate the GradCAM method.
-        :param target_layer:
-        :return:
-        """
-        raise NotImplemented
-
-    def xai_cam(self):
-        """
-        Calculate the CAM values for
-        :return:
-        """
-        raise NotImplemented
-
     def visualize_shap_ntu(self):
         logging.info("Initializing SHAP visualizations for NTU...")
         paths = [
@@ -879,8 +795,8 @@ class ShapGCN(Initializer):
             "logs/xai/three_classes_xview60/2024-10-22_10-48-22",
             "logs/xai/three_classes_xview60/2024-10-22_10-50-21",
         ]
-        shap_visualizer = XAIVis(self.val_loader, self.save_dir)
-        shap_visualizer.visualize_ntu(paths)
+        shap_visualizer = ShapVisualizer(self.val_loader, self.save_dir)
+        shap_visualizer.visualize_ntu_shap(paths)
 
     def visualize_shap_cp(self):
         """
@@ -895,8 +811,8 @@ class ShapGCN(Initializer):
             "logs/xai/exp_new_model_cp29/2024-10-07_15-36-50",
             "logs/xai/exp_new_model_cp29/2024-10-08_14-13-09"
         ]
-        shap_visualizer = XAIVis(self.val_loader, self.save_dir)
-        shap_visualizer.visualize_cp(paths)
+        shap_visualizer = ShapVisualizer(self.val_loader, self.save_dir)
+        shap_visualizer.visualize_cp_shap(paths)
 
     def _shap_background(self) -> tuple[torch.Tensor, torch.Tensor, np.array]:
         """
@@ -1057,6 +973,23 @@ class ShapGCN(Initializer):
         logging.info('Learning rate scheduler: {}'.format(self.scheduler.__class__.__name__))
         logging.info("Done with initializing student skeleton...")
 
+    def init_student_model(self):
+        """
+        Initialize the student model.
+        :return:
+        """
+        checkpoint = self._load_weights()
+        self.__build_student(checkpoint, 0)
+        self.assign_weights_opt_lrs(checkpoint)
+        model_weights = collections.OrderedDict()
+        # Copy contents of sub_dicts into model_weights
+        model_weights.update(checkpoint['model']['input_stream'])
+        model_weights.update(checkpoint['model']['main_stream'])
+        model_weights.update(checkpoint['model']['classifier'])
+        self.student_model.load_state_dict(model_weights)
+        logging.info("Loaded weights to model")
+        self.assign_weights_model(model_weights)
+
     def assign_weights_model(self, model_weights) -> None:
         """
         Assign weights to the student model and put to GPU
@@ -1084,7 +1017,6 @@ class ShapGCN(Initializer):
             logging.info("Starting the retrain...")
             self.retrain_student()
 
-
     def _load_weights(self):
         """
         Load weights into the model from the specified file.
@@ -1103,7 +1035,6 @@ class ShapGCN(Initializer):
             logging.error("File not found at: {}".format(self.model_path))
             logging.info("Please check the path an try again!")
             sys.exit()
-
 
     def infer_student(self, student_id=0) -> dict:
         # initialize trainer

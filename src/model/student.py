@@ -51,6 +51,13 @@ class Student(nn.Module):
         else:
             self.actions_hyper_dict = actions_hyper
 
+        # GradCAM bug to get features after activation
+        self.feat_main = None
+        self.feat_j = None
+        self.feat_v = None
+        self.feat_b = None
+        self.feat_a = None
+
         # make sure all actions are set
         assert None not in self.action_arch_dict
         assert None not in self.actions_hyper_dict
@@ -115,11 +122,27 @@ class Student(nn.Module):
         # put number of channels first
         x = x.permute(1, 0, 5, 2, 3, 4).contiguous().view(I, N * M, C, T, V)
 
+        # Separate the input stream by modality (assuming JVBA order)!
+        x_j = x[0]  # Joint data
+        x_v = x[1]  # Velocity data
+        x_b = x[2]  # Bone data
+        x_a = x[3]  # Acceleration data
+
+        # Apply each branch separately
+        self.feat_j = self.input_stream[0](x_j)
+        self.feat_v = self.input_stream[1](x_v)
+        self.feat_b = self.input_stream[2](x_b)
+        self.feat_a = self.input_stream[3](x_a)
+
+        # Fuse the output from the separate branches
+        x = torch.cat((self.feat_j, self.feat_v, self.feat_b, self.feat_a), dim=1)
+
         # input branches
         # iterate over the number of branches (JVBA) and fuse the output tensor
-        x = torch.cat([branch(x[i]) for i, branch in enumerate(self.input_stream)], dim=1)
+        # x = [branch(x[i]) for i, branch in enumerate(self.input_stream)]
+        # x = torch.cat(x, dim=1)
 
-        # main stream
+        # Main stream
         x = self.main_stream(x)
 
         # output

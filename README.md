@@ -1,7 +1,7 @@
 ShapGCN
 ==============================
 
-Implementation of [**Explaining Human Activity Recognition with SHAP: Validating Insights with Perturbation and Quantitative Measures**](https://arxiv.org/abs/2411.03714),
+Implementation of [**Explaining Human Activity Recognition with SHAP: Validating Insights with Perturbation and Quantitative Measures**](https://www.sciencedirect.com/science/article/pii/S001048252500188X),
 extended with the experiments of [**Choose Your Explanation: A Comparison of SHAP and GradCAM in Human Activity Recognition**](https://arxiv.org/pdf/2412.16003)
 
 ### Libraries
@@ -96,13 +96,16 @@ If you have any questions, feel free to email `felix.e.f.tempel@ntnu.no`.
 
 Please cite our papers if you use this code in your research. :)
 ```
-@misc{tempelExplainingHumanActivity2024,
-	title = {Explaining {Human} {Activity} {Recognition} with {SHAP}: {Validating} {Insights} with {Perturbation} 
-	and {Quantitative} {Measures}},
-	url = {https://arxiv.org/abs/2411.03714},
-	doi = {10.48550/ARXIV.2411.03714},
-	author = {Tempel, Felix and Ihlen, Espen Alexander F. and Adde, Lars and Strümke, Inga},
-	year = {2024},
+@article{tempelExplainingHumanActivity2025
+	title = {Explaining Human Activity Recognition with SHAP: Validating insights with perturbation and quantitative measures},
+	journal = {Computers in Biology and Medicine},
+	volume = {188},
+	pages = {109838},
+	year = {2025},
+	issn = {0010-4825},
+	doi = {https://doi.org/10.1016/j.compbiomed.2025.109838},
+	url = {https://www.sciencedirect.com/science/article/pii/S001048252500188X},
+	author = {Felix Tempel and Espen Alexander F. Ihlen and Lars Adde and Inga Strümke}
 }
 
 @misc{tempel2024chooseexplanationcomparisonshap,

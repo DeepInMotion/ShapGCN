@@ -25,7 +25,7 @@ class CPDataloader(Dataset, BaseDataLoader):
                  'val_set':     'val2',
                  'test_set':    'test',
                  'layout':      'in-motion'},
-        'cp29': {'class': 2, 'folder': 'cp_29', 'shape': [4, 4, 225, 29, 1],
+        'cp29': {'class': 2, 'folder': 'cp_29', 'shape': [4, 4, 150, 29, 1],
                  'train_set':   'val13456',
                  'val_set':     'val27',
                  'test_set':    'test',
@@ -282,6 +282,12 @@ class CPDataloader(Dataset, BaseDataLoader):
     def multi_input(self, data):
         """
         Generate features from data.
+        CP 29 data is already preprocessed within the numpy files. 
+        This includes:
+        - butterworth filter, 
+        - resampling to 30Hz,
+        - Frame-level trunk centralization and alignment,
+        - Sequence-level scale normalization.
         :param data:
         :return: features
         """
